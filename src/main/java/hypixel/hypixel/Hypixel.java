@@ -13,9 +13,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
@@ -34,15 +36,16 @@ import java.util.*;
 
 public final class Hypixel extends JavaPlugin implements Listener, CommandExecutor
 {
+    public boolean isneither = true;
     public int ti;
-    public World neither;
+    public Location loc = null;
+    public String neither = "uhcne";
     public String mapname = "uhc";
     public int umapid = 0;
     public int peacetime = 10;
-    public int killtime = 20;
+    public int killtime = 35;
     public int deathmatchtime = 3;
-    public int[] borderarea = {2000,50,5};
-    enum skills {superinvisible}
+    public int[] borderarea = {2000,105,5};
     private Scoreboard board;
     private Objective obj;
     private Score one;
@@ -61,7 +64,7 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
     HashMap<UUID, Integer> hack = new HashMap<UUID, Integer>();
     HashMap<UUID, Integer> diamond = new HashMap<UUID, Integer>();
     HashMap<UUID, Integer> stone = new HashMap<UUID, Integer>();
-    HashMap<UUID, skills> skill = new HashMap<UUID, skills>();
+    HashMap<UUID, Boolean> perunskill = new HashMap<UUID, Boolean>();
     @SuppressWarnings("deprecation")
     @Override
     public void onEnable()
@@ -76,7 +79,7 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
         ItemStack item = new ItemStack(Material.IRON_PICKAXE);
         item.addEnchantment(Enchantment.DIG_SPEED,1);
         item.addUnsafeEnchantment(Enchantment.DURABILITY,1);
-        ShapedRecipe newrecipe = new ShapedRecipe(new NamespacedKey(this, "quick_pick"),item).shape(new String[]{"@@@","P#P"," # "}).setIngredient('@',Material.IRON_ORE).setIngredient('#',Material.STICK).setIngredient('P',Material.COAL);
+        ShapedRecipe newrecipe = new ShapedRecipe(new NamespacedKey(this, "Quick Pick"),item).shape(new String[]{"@@@","P#P"," # "}).setIngredient('@',Material.IRON_ORE).setIngredient('#',Material.STICK).setIngredient('P',Material.COAL);
         getServer().addRecipe(newrecipe);
 
 
@@ -90,51 +93,124 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
 
         item = new ItemStack(Material.IRON_SWORD,1);
         item.addEnchantment(Enchantment.DAMAGE_ALL,2);
-        newrecipe = new ShapedRecipe(new NamespacedKey(this, "special_sward"),item).shape(new String[]{" @ "," # "," @ "}).setIngredient('@',Material.REDSTONE_BLOCK).setIngredient('#',Material.IRON_SWORD);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Apprentice Sword"),item).shape(new String[]{" @ "," # "," @ "}).setIngredient('@',Material.REDSTONE_BLOCK).setIngredient('#',Material.IRON_SWORD);
         getServer().addRecipe(newrecipe);
 
         item = new ItemStack(Material.BOW,1);
         item.addEnchantment(Enchantment.ARROW_DAMAGE,2);
-        newrecipe = new ShapedRecipe(new NamespacedKey(this, "special_bow"),item).shape(new String[]{" @#","@ #"," @#"}).setIngredient('@',Material.REDSTONE_TORCH).setIngredient('#',Material.STRING);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Apperntice Bow"),item).shape(new String[]{" @#","@ #"," @#"}).setIngredient('@',Material.REDSTONE_TORCH).setIngredient('#',Material.STRING);
         getServer().addRecipe(newrecipe);
 
-/*
+
         item = new ItemStack(Material.ENCHANTED_BOOK,1);
         EnchantmentStorageMeta a =(EnchantmentStorageMeta) item.getItemMeta();
         a.addStoredEnchant(Enchantment.PROTECTION_ENVIRONMENTAL,1,false);
         item.setItemMeta(a);
-        newrecipe = new ShapedRecipe(new NamespacedKey(this, "protect_book"),item).shape(new String[]{"   "," @@"," @#"}).setIngredient('@',Material.PAPER).setIngredient('#',Material.IRON_INGOT);
-        getServer().addRecipe(newrecipe);5
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "protection_book"),item).shape(new String[]{"   "," @@"," @#"}).setIngredient('@',Material.PAPER).setIngredient('#',Material.IRON_INGOT);
+        getServer().addRecipe(newrecipe);
 
         item = new ItemStack(Material.ENCHANTED_BOOK,1);
         EnchantmentStorageMeta b =(EnchantmentStorageMeta) item.getItemMeta();
         b.addStoredEnchant(Enchantment.DAMAGE_ALL,1,false);
         item.setItemMeta(b);
-        newrecipe = new ShapedRecipe(new NamespacedKey(this, "sharp_book"),item).shape(new String[]{"Q  "," @@"," @#"}).setIngredient('@',Material.PAPER).setIngredient('Q',Material.FLINT).setIngredient('#',Material.IRON_SWORD);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "sharpness_book"),item).shape(new String[]{"Q  "," @@"," @#"}).setIngredient('@',Material.PAPER).setIngredient('Q',Material.FLINT).setIngredient('#',Material.IRON_SWORD);
         getServer().addRecipe(newrecipe);
-        */
+
 
         item = new ItemStack(Material.ANVIL,1);
-        newrecipe = new ShapedRecipe(new NamespacedKey(this, "anvil"),item).shape(new String[]{"@@@"," ! ","@@@"}).setIngredient('@',Material.IRON_INGOT).setIngredient('!',Material.IRON_BLOCK);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Light Anvil"),item).shape(new String[]{"@@@"," ! ","@@@"}).setIngredient('@',Material.IRON_INGOT).setIngredient('!',Material.IRON_BLOCK);
         getServer().addRecipe(newrecipe);
 
-
-        item = new ItemStack(Material.IRON_HELMET,1);
+        item = new ItemStack(Material.DIAMOND_HELMET,1);
         //item.addUnsafeEnchantment(Enchantment.PROTECTION_PROJECTILE,1);
         //item.addUnsafeEnchantment(Enchantment.PROTECTION_EXPLOSIONS,1);
         //item.addUnsafeEnchantment(Enchantment.PROTECTION_FIRE,1);
-        EnchantmentStorageMeta a =(EnchantmentStorageMeta) item.getItemMeta();
+        a =(EnchantmentStorageMeta) item.getItemMeta();
+        a.displayName(Component.text("Tarnhelm"));
         a.addStoredEnchant(Enchantment.PROTECTION_ENVIRONMENTAL,1,false);
+        item.addUnsafeEnchantment(Enchantment.PROTECTION_FIRE,1);
+        item.addUnsafeEnchantment(Enchantment.PROTECTION_PROJECTILE,1);
         item.setItemMeta((ItemMeta) a);
-        newrecipe = new ShapedRecipe(new NamespacedKey(this, "special_helmat"),item).shape(new String[]{"@@@","@#@","   "}).setIngredient('@',Material.IRON_INGOT).setIngredient('#',Material.REDSTONE_TORCH);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Tarnhelm"),item).shape(new String[]{"@.@","@#@","   "}).setIngredient('.',Material.IRON_INGOT).setIngredient('#',Material.REDSTONE_BLOCK).setIngredient('@',Material.DIAMOND);
         getServer().addRecipe(newrecipe);
 
-        item = new ItemStack(Material.DIAMOND_PICKAXE,1,(short) 1544);
+        item = new ItemStack(Material.IRON_HELMET,1);
+        //item.addUnsafeEnchantment(Enchantment.PROTECTION_EXPLOSIONS,1);
+        //item.addUnsafeEnchantment(Enchantment.PROTECTION_FIRE,1);
+        a =(EnchantmentStorageMeta) item.getItemMeta();
+        a.addStoredEnchant(Enchantment.PROTECTION_ENVIRONMENTAL,1,false);
+        a.displayName(Component.text("Apprentice Helmet"));
+        item.addUnsafeEnchantment(Enchantment.PROTECTION_FIRE,1);
+        item.addUnsafeEnchantment(Enchantment.PROTECTION_EXPLOSIONS,1);
+        item.addUnsafeEnchantment(Enchantment.PROTECTION_PROJECTILE,1);
+        item.setItemMeta((ItemMeta) a);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Apprentice Helmet"),item).shape(new String[]{"@@@","@#@","   "}).setIngredient('@',Material.IRON_INGOT).setIngredient('#',Material.REDSTONE_TORCH);
+        getServer().addRecipe(newrecipe);
+
+        item = new ItemStack(Material.DIAMOND_PICKAXE,2,(short) 1544);
         item.addUnsafeEnchantment(Enchantment.LOOT_BONUS_BLOCKS,1);
         item.addUnsafeEnchantment(Enchantment.DURABILITY,1);
-        newrecipe = new ShapedRecipe(new NamespacedKey(this, "luck"),item).shape(new String[]{"$@$","Q#Q"," # "}).setIngredient('@',Material.GOLD_ORE).setIngredient('$',Material.IRON_ORE).setIngredient('Q',Material.LAPIS_BLOCK).setIngredient('#',Material.STICK);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Philosopher's Pickaxe"),item).shape(new String[]{"$@$","Q#Q"," # "}).setIngredient('@',Material.GOLD_ORE).setIngredient('$',Material.IRON_ORE).setIngredient('Q',Material.LAPIS_BLOCK).setIngredient('#',Material.STICK);
         getServer().addRecipe(newrecipe);
 
+
+        item = new ItemStack(Material.DIAMOND_CHESTPLATE);
+        a =(EnchantmentStorageMeta) item.getItemMeta();
+        a.addStoredEnchant(Enchantment.PROTECTION_ENVIRONMENTAL,4,false);
+        a.displayName(Component.text("Dragon Armor"));
+        item.setItemMeta(a);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Dragon Armor"),item).shape(new String[]{" @ "," # ","%*%"}).setIngredient('@',Material.MAGMA_CREAM).setIngredient('#',Material.DIAMOND_CHESTPLATE).setIngredient('%',Material.OBSIDIAN).setIngredient('*',Material.ANVIL);
+        getServer().addRecipe(newrecipe);
+
+
+        item = new ItemStack(Material.IRON_SWORD);
+        a =(EnchantmentStorageMeta) item.getItemMeta();
+        a.addStoredEnchant(Enchantment.DAMAGE_ALL,2,false);
+        a.displayName(Component.text("Anduril"));
+        item.setItemMeta(a);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Andeuril"),item).shape(new String[]{" @ "," # ","%*%"}).setIngredient('@',Material.MAGMA_CREAM).setIngredient('#',Material.DIAMOND_CHESTPLATE).setIngredient('%',Material.OBSIDIAN).setIngredient('*',Material.ANVIL);
+        getServer().addRecipe(newrecipe);
+
+
+        item = new ItemStack(Material.IRON_SWORD);
+        a =(EnchantmentStorageMeta) item.getItemMeta();
+        a.addStoredEnchant(Enchantment.DAMAGE_ALL,2,false);
+        a.displayName(Component.text("Anduril"));
+        item.setItemMeta(a);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Anduril"),item).shape(new String[]{" @ "," # ","%*%"}).setIngredient('@',Material.MAGMA_CREAM).setIngredient('#',Material.DIAMOND_CHESTPLATE).setIngredient('%',Material.OBSIDIAN).setIngredient('*',Material.ANVIL);
+        getServer().addRecipe(newrecipe);
+
+        item = new ItemStack(Material.GOLDEN_APPLE);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Light Apple"),item).shape(new String[]{" @ ","@#@"," @ "}).setIngredient('@',Material.GOLD_INGOT).setIngredient('#',Material.APPLE);
+        getServer().addRecipe(newrecipe);
+
+        item = new ItemStack(Material.ARROW, 20);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Arrow Economy"),item).shape(new String[]{"@@@","###","***"}).setIngredient('@',Material.FLINT).setIngredient('#',Material.STICK).setIngredient('*',Material.FEATHER);
+        getServer().addRecipe(newrecipe);
+
+        item = new ItemStack(Material.DIAMOND_SWORD);
+        a =(EnchantmentStorageMeta) item.getItemMeta();
+        a.addStoredEnchant(Enchantment.DAMAGE_ALL,2,false);
+        a.displayName(Component.text("Dragon Sword"));
+        item.setItemMeta(a);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Dragon Sword"),item).shape(new String[]{" @ "," # ","%@%"}).setIngredient('@',Material.BLAZE_POWDER).setIngredient('#',Material.DIAMOND_SWORD).setIngredient('%',Material.OBSIDIAN);
+        getServer().addRecipe(newrecipe);
+
+        item = new ItemStack(Material.PLAYER_HEAD);//
+        SkullMeta aq = (SkullMeta) item.getItemMeta();
+        aq.setOwner("Gold Steve Head");
+        aq.displayName(Component.text("Golden Head"));
+        item.setItemMeta(aq);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Golden Head"),item).shape(new String[]{"@@@","@#@","@@@"}).setIngredient('@',Material.GOLD_INGOT).setIngredient('#',Material.PLAYER_HEAD);
+        getServer().addRecipe(newrecipe);
+
+        item = new ItemStack(Material.DIAMOND_AXE);
+        a =(EnchantmentStorageMeta) item.getItemMeta();
+        a.displayName(Component.text("Axe of Perun"));
+
+        item.setItemMeta(a);
+        newrecipe = new ShapedRecipe(new NamespacedKey(this, "Axe of Perun"),item).shape(new String[]{"@$% ","@^ "," ^ "}).setIngredient('@',Material.DIAMOND).setIngredient('$',Material.TNT).setIngredient('%',Material.FIRE_CHARGE).setIngredient('^',Material.STICK);
+        getServer().addRecipe(newrecipe);
 
         consol.sendMessage( ChatColor.GREEN + "[Hypixel] 레시피 제작완료");
 
@@ -149,10 +225,12 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
                     if(min>-1&&sec>20)
                     {
 
-                        List<Player> players = getServer().getWorld(mapname).getPlayers();
-                        for (Player player : players)
+                        List players = getServer().getWorld(mapname).getPlayers();
+                        players.add(getServer().getWorld(neither).getPlayers());
+                        int qqeq = players.size();
+                        for(int i = 0;i<qqeq;i++)
                         {
-                            Player pl = player;
+                            Player pl = (Player) players.get(i);
                             uhcscboard(pl);
                         }
                     }
@@ -163,6 +241,20 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
                     {
                         tick=0;
                         sec++;
+                        List players = getServer().getWorld(mapname).getPlayers();
+                        players.add(getServer().getWorld(neither).getPlayers());
+                        int qqeq = players.size();
+                        for(int i = 0;i<qqeq;i++)
+                        {
+                            Player pl = (Player) players.get(i);
+                            if(pl.getInventory().getItemInMainHand().displayName().equals("Anduril"))
+                            {
+                                PotionEffect p = new PotionEffect(PotionEffectType.SPEED, 1, 1);
+                                pl.addPotionEffect(p);
+                                p = new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 1, 1);
+                                pl.addPotionEffect(p);
+                            }
+                        }
                     }
                     if (sec==60)
                     {
@@ -174,9 +266,11 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
                     if(min==peacetime&&sec==0&&tick==0)
                     {
                         getServer().getWorld(mapname).setPVP(true);
+                        getServer().getWorld(neither).setPVP(true);
                         isdropinghead = true;
                         getServer().getWorld(mapname).getWorldBorder().setSize(borderarea[1],  killtime*60);
                         List play = getServer().getWorld(mapname).getPlayers();
+                        play.add(getServer().getWorld(neither).getPlayers());
                         int q = play.size();
                         for(int i = 0;i<q;i++)
                         {
@@ -186,13 +280,23 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
                     }
                     if(min==(peacetime+killtime)&&sec==0&&tick==0)
                     {
+                        isneither = false;
                         List play = getServer().getWorld(mapname).getPlayers();
+                        play.add(getServer().getWorld(neither).getPlayers());
                         for (Object o : play) {
                             Player pl = (Player) o;
-                            pl.sendTitle(ChatColor.RED + "자기장이 줄어듭니다", "독 효과가 부여됩니다", 0, 40, 20);
+                            pl.sendTitle(ChatColor.RED + "자기장이 줄어듭니다", "  ", 0, 40, 20);
                             if (pl.getGameMode() == GameMode.SURVIVAL) {
                                 pl.setGlowing(true);
-                                pl.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 1000000000, 2));
+                                Random random = new Random();
+                                int x = random.nextInt(borderarea[1])-(borderarea[1]/2);
+                                random = new Random();
+                                int z = random.nextInt(borderarea[1])-(borderarea[1]/2);
+                                int y = getServer().getWorld(mapname).getHighestBlockYAt(x, z)+1;
+
+                                loc = new Location(getServer().getWorld(mapname), x, y, z);
+                                loc.getBlock().setType(Material.BEDROCK);
+                                pl.teleport(loc);
                             }
                         }
                         getServer().getWorld(mapname).getWorldBorder().setSize(borderarea[2], deathmatchtime*60);
@@ -214,9 +318,45 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
         }.runTaskTimer(this, 0L, 1L);
     }
 
+    @EventHandler
+    public void Onportal(PlayerPortalEvent e)
+    {
+        if(isneither)
+            e.setCancelled(true);
+    }
+    @EventHandler
+    public void OnDamage(EntityDamageByEntityEvent e)
+    {
+        if(e.getDamager().getType()==EntityType.PLAYER&&e.getEntity().getType()==EntityType.PLAYER)
+        {
+            Player hitter = (Player)e.getDamager();
+            Player p = (Player)e.getEntity();
+
+            if(hitter.getInventory().getItemInMainHand().displayName().equals("Axe of Perun"))
+            {
+                if(perunskill.get(hitter.getUniqueId()))
+                {
+                    perunskill.put(hitter.getUniqueId(),false);
+                    new BukkitRunnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            perunskill.put(hitter.getUniqueId(),true);
+                            e.setDamage(e.getDamage()+1.5f);
+                            Location locccccc = e.getEntity().getLocation();
+                            World w = p.getWorld();
+                            w.strikeLightningEffect(locccccc);
+                            return;
+                        }
 
 
+                    }.runTaskTimer(this, 160L, 1L);
+                }
+            }
 
+        }
+    }
     public void uhcscboard(Player player)
     {
         int p = 1;
@@ -287,9 +427,6 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
         six.setScore(p);
         p++;
 
-        seven = obj.getScore(ChatColor.WHITE+"자기장과의 거리");
-        seven.setScore(p);
-        p++;
         player.setScoreboard(board);
     }
 
@@ -337,18 +474,19 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
     {
         Player player  = e.getEntity();
         getServer().sendMessage(Component.text(ChatColor.RED+"사람이 죽었다"));
-
+        Location locccccc = e.getEntity().getLocation();
+        World w = player.getWorld();
+        w.strikeLightningEffect(locccccc);
         if(e.getEntity().getType()==EntityType.PLAYER)
         {
-            if(isdropinghead&&isgaming)
+            if(isgaming)
             {
 
                 ItemStack skull = new ItemStack(Material.PLAYER_HEAD, 1);
                 SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
                 skullMeta.setDisplayName(player.getName()+"'s head");
-                skullMeta.setOwner(player.getName()+"'s head");
+                skullMeta.setOwner(player.getName());
                 skull.setItemMeta(skullMeta);
-                skull.addUnsafeEnchantment(Enchantment.LUCK,100);
                 e.getEntity().getWorld().dropItemNaturally(e.getEntity().getLocation(),skull).setVelocity(new org.bukkit.util.Vector(0,0,0));
 
 
@@ -387,9 +525,7 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
         player.getAttribute(Attribute.GENERIC_ATTACK_SPEED).setBaseValue(1000);
         player.getScoreboard().clearSlot(DisplaySlot.SIDEBAR);
         UUID uuid = player.getUniqueId();
-        diamond.put(uuid,0);
-        stone.put(uuid,0);
-        hack.put(uuid,0);
+        perunskill.put(uuid,true);
         e.setJoinMessage(getConfig().getString("서버접속"));
         player.sendMessage(ChatColor.RED+"서버 소개\n"+ChatColor.WHITE+"공격 딜레이가 없습니다.\n/uhc명령어를 통해 게임을 시작할 수 있습니다.\n특별 레시피가 있습니다.\n레시피는 기본적으로 조합법을 드립니다.");
         if(isgaming)
@@ -443,49 +579,37 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
 
         try
         {
-            if(e.getAction().equals(Action.LEFT_CLICK_AIR)||e.getAction().equals(Action.LEFT_CLICK_BLOCK)||e.getAction().equals(Action.RIGHT_CLICK_AIR))
+            if(p.getInventory().getItemInMainHand().getType()!=Material.PLAYER_HEAD)
             {
+                return;
+            }
                 ItemStack firstitem = p.getInventory().getItemInMainHand().asOne();
-                ItemStack seconditem = new ItemStack(p.getInventory().getItemInOffHand().getType(),8);
-                if(p.getInventory().getItemInMainHand().getItemMeta().getEnchantLevel(Enchantment.LUCK)==100)
+                String headowner = null;
+                SkullMeta skullmeta =(SkullMeta) p.getInventory().getItemInMainHand().getItemMeta();
+                headowner = skullmeta.getOwner();
+                if(headowner.equalsIgnoreCase("Gloden Steve Head"))
                 {
-                    if ( p.getInventory().getItemInOffHand().getType().equals(Material.IRON_INGOT)&&p.getInventory().getItemInOffHand().getAmount()>7)
-                    {
-                        p.getInventory().removeItem(seconditem);
-                        p.getInventory().removeItem(firstitem);
-
-                        p.getInventory().addItem(new ItemStack(Material.ZOMBIE_HEAD,1));
-                    }
-                    else
-                    {
-                        p.removePotionEffect(PotionEffectType.SPEED);
-                        p.removePotionEffect(PotionEffectType.REGENERATION);
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED,100, 1));
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION,200, 2));
-                        p.getInventory().removeItem(firstitem);
-                    }
-
-                }
-                if(p.getInventory().getItemInMainHand().getType()==Material.ZOMBIE_HEAD)
-                {
-                    firstitem = new ItemStack(Material.ZOMBIE_HEAD,1);
                     p.removePotionEffect(PotionEffectType.SPEED);
                     p.removePotionEffect(PotionEffectType.REGENERATION);
                     p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED,600, 2));
                     p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION,200, 3) );
                     p.getInventory().removeItem(firstitem);
                 }
-
-            }
-
-            if(p.getInventory().getItemInMainHand().getItemMeta().getEnchantLevel(Enchantment.LUCK)==100||e.getAction().equals(Action.RIGHT_CLICK_BLOCK))
-            {
-                if(p.getInventory().getItemInMainHand().getItemMeta().getEnchantLevel(Enchantment.LUCK)==100)
+                else
                 {
-                    e.setCancelled(true);
+                    p.removePotionEffect(PotionEffectType.SPEED);
+                    p.removePotionEffect(PotionEffectType.REGENERATION);
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED,100, 1));
+                    p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION,200, 2));
+                    p.getInventory().removeItem(firstitem);
                 }
-
+            if(e.getAction().equals(Action.RIGHT_CLICK_BLOCK))
+            {
+                e.setCancelled(true);
             }
+
+
+
         }
         catch(NullPointerException exception)
         {
@@ -569,14 +693,37 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
         for(int i = 0;i<Option.length;i++)
         {
             String space = "　";
-            int len = Option[i].split(":")[0].length();
+            int len = Option[i].split(" : ")[0].length();
 
             while((16-len)>0)
             {
                 space = space+"　";
                 len++;
             }
-
+            if(Option[i].split(" : ")[0].equalsIgnoreCase("평화시간"))
+            {
+                peacetime =Integer.parseInt(Option[i].split(" : ")[1]);
+            }
+            else if(Option[i].split(" : ")[0].equalsIgnoreCase("죽이는　시간"))
+            {
+                killtime =Integer.parseInt(Option[i].split(" : ")[1]);
+            }
+            else if(Option[i].split(" : ")[0].equalsIgnoreCase("마지막　시간"))
+            {
+                deathmatchtime =Integer.parseInt(Option[i].split(" : ")[1]);
+            }
+            else if(Option[i].split(" : ")[0].equalsIgnoreCase("자기장　처음　넓이"))
+            {
+                borderarea[0] =Integer.parseInt(Option[i].split(" : ")[1]);
+            }
+            else if(Option[i].split(" : ")[0].equalsIgnoreCase("자기장　두번째　넓이"))
+            {
+                borderarea[1] =Integer.parseInt(Option[i].split(" : ")[1]);
+            }
+            else if(Option[i].split(" : ")[0].equalsIgnoreCase("자기장　마지막　넓이"))
+            {
+                borderarea[2] =Integer.parseInt(Option[i].split(" : ")[1]);
+            }
             consol.sendMessage(ChatColor.AQUA + "[Hypixel] - " + Option[i].split(":")[0]+space+" -- "+ChatColor.GREEN+Option[i].split(": ")[1]);
         }
         consol.sendMessage( ChatColor.AQUA + "[Hypixel]");
@@ -602,7 +749,12 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
             Random createRandom = new Random();
             umapid = createRandom.nextInt(1000);
             mapname = "uhc" + String.valueOf(umapid);
-            consol.sendMessage(ChatColor.RED + "월드 이름 : " + ChatColor.YELLOW + mapname + "\n");
+            consol.sendMessage(ChatColor.RED + "오버월드 이름 : " + ChatColor.YELLOW + mapname + "\n");
+
+            createRandom = new Random();
+            umapid = createRandom.nextInt(1000);
+            neither = "uhcne" + String.valueOf(umapid);
+            consol.sendMessage(ChatColor.RED + "네더월드 이름 : " + ChatColor.YELLOW + neither + "\n");
 
             peacetime = Integer.valueOf(getConfig().getString("평화시간"));
             killtime = Integer.valueOf(getConfig().getString("죽이는　시간"));
@@ -624,9 +776,13 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
 
             consol.sendMessage(ChatColor.YELLOW + "월드 생성중...");
             World world;
+            World neitherw;
+            WorldCreator sed = new WorldCreator(neither);
 
-                WorldCreator seed = new WorldCreator(mapname);
-                world = seed.createWorld();
+            sed.environment(World.Environment.NETHER);
+            neitherw = sed.createWorld();
+            WorldCreator seed = new WorldCreator(mapname);
+            world = seed.createWorld();
             /*
             new BukkitRunnable()
             {
@@ -663,6 +819,11 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
                 world.getWorldBorder().setDamageBuffer(0);
                 world.getWorldBorder().setSize(borderarea[0]);
 
+                world.setPVP(false);
+                world.setDifficulty(Difficulty.NORMAL);
+                //world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
+                world.setGameRule(GameRule.NATURAL_REGENERATION, false);
+                world.setGameRule(GameRule.DO_IMMEDIATE_RESPAWN, true);
                 game = "uhc";
 
                 isdropinghead = false;
