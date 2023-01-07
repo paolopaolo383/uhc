@@ -158,6 +158,7 @@ public final class Hypixel extends JavaPlugin implements Listener, CommandExecut
         a =(EnchantmentStorageMeta) item.getItemMeta();
         a.addStoredEnchant(Enchantment.PROTECTION_ENVIRONMENTAL,4,false);
         a.displayName(Component.text("Dragon Armor"));
+
         item.setItemMeta(a);
         newrecipe = new ShapedRecipe(new NamespacedKey(this, "Dragon Armor"),item).shape(new String[]{" @ "," # ","%*%"}).setIngredient('@',Material.MAGMA_CREAM).setIngredient('#',Material.DIAMOND_CHESTPLATE).setIngredient('%',Material.OBSIDIAN).setIngredient('*',Material.ANVIL);
         getServer().addRecipe(newrecipe);
